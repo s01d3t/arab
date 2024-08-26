@@ -48,7 +48,7 @@ def get_number(browser):
     return number
 
 
-def parse_advs(browser, adversitement_urls):
+def parse_adversitements(browser, adversitement_urls):
     data = []
     if adversitement_urls:
         try:
@@ -78,7 +78,7 @@ def main():
         browser.maximize_window()
 
         adversitement_urls = get_adversitement_urls(browser, BASE_URL)
-        data = parse_advs(browser, adversitement_urls)
+        data = parse_adversitements(browser, adversitement_urls)
     finally:
         export(data, 'arab.xlsx')
         browser.quit()
