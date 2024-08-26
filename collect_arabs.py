@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, InvalidArgumentException
 from locators import FirstPageLocators, AdvPageLocators
 import pandas as pd
