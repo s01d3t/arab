@@ -61,7 +61,7 @@ def parse_advs(browser, adversitement_urls):
                 data.append([title, name, number, url])
         finally:
             return data
-   
+
 
 def export(data, filename):
     if data:
