@@ -2,7 +2,7 @@ from selenium.webdriver.common.by import By
 
 
 class FirstPageLocators():  
-    adversitements = (By.CLASS_NAME, 'property-card-module_property-card__link__L6AKb')
+    adversitement = (By.CLASS_NAME, 'property-card-module_property-card__link__L6AKb')
 
 
 class AdvPageLocators():
