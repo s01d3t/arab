@@ -1,22 +1,28 @@
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, InvalidArgumentException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from locators import FirstPageLocators, AdvPageLocators
 import pandas as pd
 import re
 
 
-url = 'https://www.propertyfinder.ae/en/search?l=50&c=2&fu=0&rp=y&ob=mr'
+BASE_URL = 'https://www.propertyfinder.ae/en/search?l=50&c=2&fu=0&rp=y&ob=mr'
 
 
-def get_adv_urls(browser, url):
-    browser.get(url)
-    adv_urls = browser.find_elements(*FirstPageLocators.adv)
-    if adv_urls:
-        for i, adv in enumerate(adv_urls):
-            adv_urls[i] = adv.get_attribute('href')
-    else:
-        adv_urls = 'sorry, no urls found :('
-    return adv_urls
+def get_adversitement_urls(browser, url):
+    try:
+        browser.get(url)
+        adversitement_urls = browser.find_elements(*FirstPageLocators.adversitement)
+        if adversitement_urls:
+            for i, adversitement in enumerate(adversitement_urls):
+                adversitement_urls[i] = adversitement.get_attribute('href')
+        else:
+            print('ссылки на обьявления не найдены!')
+        return adversitement_urls
+    except (NoSuchElementException, WebDriverException, InvalidArgumentException):
+        print('что-то пошло не так :( пожалуйста, проверь ссылку или локаторы')
 
 
 def get_name(browser):
@@ -29,7 +35,7 @@ def get_name(browser):
 
 def get_title(browser):
     try:
-        title = browser.find_element(*AdvPageLocators.adv_title).text
+        title = browser.find_element(*AdvPageLocators.adversitement_title).text
     except NoSuchElementException:
         title = ':('
     return title
@@ -37,8 +43,7 @@ def get_title(browser):
 
 def get_number(browser):
     try:
-        whatsapp_redirect_url = browser.find_element(
-            *AdvPageLocators.whatsapp_button).get_attribute('href')
+        whatsapp_redirect_url = browser.find_element(*AdvPageLocators.whatsapp_button).get_attribute('href')
         pattern = r'(\+\d+)\&'
         number = re.search(pattern, whatsapp_redirect_url).group(1)
     except NoSuchElementException:
@@ -46,22 +51,28 @@ def get_number(browser):
     return number
 
 
-def parse_advs(browser, adv_urls):
+def parse_advs(browser, adversitement_urls):
     data = []
-    for url in adv_urls:
-        browser.get(url)
-        browser.execute_script('window.scrollBy(0, 500);')
-        name = get_name(browser)
-        title = get_title(browser)
-        number = get_number(browser)
-        data.append([title, name, number, url])
-    return data
-
+    if adversitement_urls:
+        try:
+            for url in adversitement_urls:
+                browser.get(url)
+                browser.execute_script('window.scrollBy(0, 500);')
+                name = get_name(browser)
+                title = get_title(browser)
+                number = get_number(browser)
+                data.append([title, name, number, url])
+        finally:
+            return data
+   
 
 def export(data, filename):
-    columns = ['Property', 'Agent', 'Number', 'URL']
-    df = pd.DataFrame(data, columns=columns)
-    df.to_excel(filename)
+    if data:
+        columns = ['Property', 'Agent', 'Number', 'URL']
+        df = pd.DataFrame(data, columns=columns)
+        df.to_excel(filename)
+    else:
+        print('нечего экспортировать :(')
 
 
 def main():
@@ -69,10 +80,10 @@ def main():
         browser = webdriver.Chrome()
         browser.maximize_window()
 
-        adv_urls = get_adv_urls(browser, url)
-        data = parse_advs(browser, adv_urls)
-        export(data, 'arab.xlsx')  
+        adversitement_urls = get_adversitement_urls(browser, BASE_URL)
+        data = parse_advs(browser, adversitement_urls)
     finally:
+        export(data, 'arab.xlsx')
         browser.quit()
 
 
