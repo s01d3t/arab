@@ -1,25 +1,58 @@
 from selenium import webdriver
+import argparse
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, InvalidArgumentException
 from locators import FirstPageLocators, AdvPageLocators
 import pandas as pd
+from tqdm import tqdm
 import re
 
 
 BASE_URL = 'https://www.propertyfinder.ae/en/search?l=50&c=2&fu=0&rp=y&ob=mr'
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--pages', type=int, default=1, required=False)
+parser.add_argument('--url', type=str, default=BASE_URL, required=False)
+args = parser.parse_args()
 
-def get_adversitement_urls(browser, url):
+
+# собрать ссылки на страницы с обьявлениями в соответствии с аргументами из флагов
+def get_pages():
+    pages = []
+
+    match = re.search(r'\d+$', args.url)
+    if match:
+        start_page = int(match.group())
+    else:
+        start_page = 1
+
+    for page in range(start_page, start_page+args.pages):
+        new_url = BASE_URL + f'&page={page}'
+        pages.append(new_url)
+    return pages
+
+
+# собрать обьявления как веб-элементы и преобразовать в ссылки на обьявления
+def get_adversitements_urls(browser, pages):
+    collected_urls = []
     try:
-        browser.get(url)
-        adversitement_urls = browser.find_elements(*FirstPageLocators.adversitement)
-        if adversitement_urls:
-            for i, adversitement in enumerate(adversitement_urls):
-                adversitement_urls[i] = adversitement.get_attribute('href')
-        else:
-            print('ссылки на обьявления не найдены!')
-        return adversitement_urls
+        for page in pages:
+            browser.get(page)
+            adversitements = browser.find_elements(*FirstPageLocators.adversitement)
+
+            urls = get_url_from_object(adversitements)
+            collected_urls.extend(urls)
     except (NoSuchElementException, WebDriverException, InvalidArgumentException):
         print('что-то пошло не так :( пожалуйста, проверь ссылку или локаторы')
+    finally:
+        return collected_urls
+
+
+# получить ссылки на обьвления из веб элементов
+def get_url_from_object(adversitements):
+    if adversitements:
+        for i, adversitement in enumerate(adversitements):
+            adversitements[i] = adversitement.get_attribute('href')
+    return adversitements
 
 
 def get_name(browser):
@@ -41,18 +74,18 @@ def get_title(browser):
 def get_number(browser):
     try:
         whatsapp_redirect_url = browser.find_element(*AdvPageLocators.whatsapp_button).get_attribute('href')
-        pattern = r'(\+\d+)\&'
-        number = re.search(pattern, whatsapp_redirect_url).group(1)
+        number = re.search(r'(\+\d+)\&', whatsapp_redirect_url).group(1)
     except NoSuchElementException:
         number = ':('
     return number
 
 
+# собрать данные из каждого обьявления
 def parse_adversitements(browser, adversitement_urls):
     data = []
     if adversitement_urls:
         try:
-            for url in adversitement_urls:
+            for url in tqdm(adversitement_urls, desc="Обработано обьявлений: "):
                 browser.get(url)
                 browser.execute_script('window.scrollBy(0, 500);')
                 name = get_name(browser)
@@ -77,7 +110,8 @@ def main():
         browser = webdriver.Chrome()
         browser.maximize_window()
 
-        adversitement_urls = get_adversitement_urls(browser, BASE_URL)
+        pages = get_pages()
+        adversitement_urls = get_adversitements_urls(browser, pages)
         data = parse_adversitements(browser, adversitement_urls)
     finally:
         export(data, 'arab.xlsx')
