@@ -1,5 +1,4 @@
 from selenium import webdriver
-import argparse
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, InvalidArgumentException
 from locators import FirstPageLocators, AdvPageLocators
 import pandas as pd
@@ -9,23 +8,45 @@ import re
 
 BASE_URL = 'https://www.propertyfinder.ae/en/search?l=50&c=2&fu=0&rp=y&ob=mr'
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--pages', type=int, default=1, required=False)
-parser.add_argument('--url', type=str, default=BASE_URL, required=False)
-args = parser.parse_args()
+
+while True:
+    input_url = input(
+        'пожалуйста, укажи ссылку на страницу. оставь поле пустым, чтобы начать c первой страницы: ').strip()
+    if input_url.startswith(BASE_URL):
+        pass
+    elif len(input_url) == 0:
+        input_url = BASE_URL
+    else:
+        print('неправильная ссылка, попробуй снова')
+        continue  
+    print('принято')
+
+    input_pages = input(
+        'пожалуйста, укажи количество страниц. оставь поле пустым, чтобы обработать одну страницу: ').strip()
+    if input_pages.isdigit():
+        pass
+    elif len(input_pages) == 0:
+        input_pages = 1
+    else:
+        print('неправильное количество страниц. попробуй снова\n')
+   
+        continue
+    print('принято')
+
+    break
 
 
 # собрать ссылки на страницы с обьявлениями в соответствии с аргументами из флагов
 def get_pages():
     pages = []
 
-    match = re.search(r'\d+$', args.url)
+    match = re.search(r'\d+$', input_url)
     if match:
         start_page = int(match.group())
     else:
         start_page = 1
 
-    for page in range(start_page, start_page+args.pages):
+    for page in range(start_page, start_page+int(input_pages)):
         new_url = BASE_URL + f'&page={page}'
         pages.append(new_url)
     return pages
