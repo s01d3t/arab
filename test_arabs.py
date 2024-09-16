@@ -26,7 +26,6 @@ def test_get_input(request, input_type, expected_url, expected_pages):
     assert pages == expected_pages
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('url, input_pages, expected_page', data.GET_PAGES_DATA)
 def test_get_pages(url, input_pages, expected_page):
     pages = get_pages(url, input_pages)
@@ -36,7 +35,6 @@ def test_get_pages(url, input_pages, expected_page):
 browser = driver()
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('url, expected_len', data.GET_ADV_DATA)
 def test_get_adversitements_urls(url, expected_len):
     urls = get_adversitements_urls(browser, url)
@@ -44,7 +42,6 @@ def test_get_adversitements_urls(url, expected_len):
     assert choice(urls).endswith('.html')
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('page, expected_name', data.GET_NAME_DATA)
 def test_get_name(page, expected_name):
     browser.get(page)
@@ -52,14 +49,12 @@ def test_get_name(page, expected_name):
     assert name == expected_name
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('adversitement_url, expected_output', data.PARSE_ADV_DATA)
 def test_parse_adversitements(adversitement_url, expected_output):
     parsed = parse_adversitements(browser, adversitement_url)
     assert parsed[0] == expected_output
 
 
-# @pytest.mark.skip
 @pytest.mark.parametrize('data_to_export, filename', data.EXPORT_DATA)
 def test_export(data_to_export, filename):
     try:
